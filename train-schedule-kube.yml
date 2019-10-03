@@ -2,6 +2,8 @@ kind: Service
 apiVersion: v1
 metadata:
   name: train-schedule-service
+  annotations:
+    prometheus.io/scrape: 'true'
 spec:
   type: NodePort
   selector:
@@ -24,12 +26,10 @@ spec:
   selector:
     matchLabels:
       app: train-schedule
-      track: stable
   template:
     metadata:
       labels:
         app: train-schedule
-        track: stable
     spec:
       containers:
       - name: train-schedule
@@ -46,3 +46,25 @@ spec:
         resources:
           requests:
             cpu: 200m
+
+---
+
+apiVersion: autoscaling/v2beta1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: train-schedule
+  namespace: default
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: train-schedule-deployment
+  minReplicas: 1
+  maxReplicas: 4
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      targetAverageUtilization: 50
+          
+
